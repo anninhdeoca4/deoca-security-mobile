@@ -36,8 +36,7 @@ class _AttendanceScreenState extends State<AttendanceScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
-
-    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.12).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
   }
@@ -49,16 +48,13 @@ class _AttendanceScreenState extends State<AttendanceScreen>
         (c) => c.lensDirection == CameraLensDirection.front,
         orElse: () => cameras.first,
       );
-
       _controller = CameraController(
         frontCamera,
-        ResolutionPreset.high,
+        ResolutionPreset.medium,
         enableAudio: false,
         imageFormatGroup: ImageFormatGroup.jpeg,
       );
-
       await _controller!.initialize();
-
       if (!mounted) return;
       setState(() => _isCameraInitialized = true);
     } catch (e) {
@@ -69,23 +65,19 @@ class _AttendanceScreenState extends State<AttendanceScreen>
   }
 
   Future<void> _capturePhoto() async {
-    if (_controller == null ||
-        !_controller!.value.isInitialized ||
-        _isCapturing) {
+    if (_controller == null || !_controller!.value.isInitialized || _isCapturing) {
       return;
     }
-
     setState(() => _isCapturing = true);
     HapticFeedback.mediumImpact();
 
     try {
       final xFile = await _controller!.takePicture();
       final croppedPath = await _detectAndCropFace(xFile.path);
-
       if (!mounted) return;
 
       if (croppedPath == null) {
-        _showError('Không phát hiện khuôn mặt. Hãy căn mặt vào khung!');
+        _showError('Không phát hiện khuôn mặt. Hãy đưa mặt vào giữa khung!');
         return;
       }
 
@@ -94,8 +86,7 @@ class _AttendanceScreenState extends State<AttendanceScreen>
         PageRouteBuilder(
           pageBuilder: (_, __, ___) => PreviewScreen(imagePath: croppedPath),
           transitionDuration: const Duration(milliseconds: 300),
-          transitionsBuilder: (_, a, __, c) =>
-              FadeTransition(opacity: a, child: c),
+          transitionsBuilder: (_, a, __, c) => FadeTransition(opacity: a, child: c),
         ),
       );
 
@@ -111,13 +102,10 @@ class _AttendanceScreenState extends State<AttendanceScreen>
             ),
             backgroundColor: Colors.green.shade600,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             duration: const Duration(seconds: 2),
           ),
         );
-
         Future.delayed(const Duration(seconds: 1), () {
           if (mounted) Navigator.pop(context);
         });
@@ -141,7 +129,6 @@ class _AttendanceScreenState extends State<AttendanceScreen>
         performanceMode: FaceDetectorMode.accurate,
       ),
     );
-
     try {
       final inputImage = InputImage.fromFilePath(imagePath);
       final faces = await faceDetector.processImage(inputImage);
@@ -151,23 +138,20 @@ class _AttendanceScreenState extends State<AttendanceScreen>
       final bytes = await File(imagePath).readAsBytes();
       final original = img.decodeImage(bytes)!;
 
-      const padding = 0.35;
+      // TĂNG PADDING ĐỂ BÙ CHO KHUNG NHỎ HƠN
+      const padding = 0.55; // Tăng từ 0.35 → 0.55
+
       final rect = face.boundingBox;
       final x = (rect.left * (1 - padding)).clamp(0, original.width - 1).toInt();
       final y = (rect.top * (1 - padding)).clamp(0, original.height - 1).toInt();
-      final w = (rect.width * (1 + 2 * padding))
-          .clamp(1, original.width - x)
-          .toInt();
-      final h = (rect.height * (1 + 2 * padding))
-          .clamp(1, original.height - y)
-          .toInt();
+      final w = (rect.width * (1 + 2 * padding)).clamp(1, original.width - x).toInt();
+      final h = (rect.height * (1 + 2 * padding)).clamp(1, original.height - y).toInt();
 
       final cropped = img.copyCrop(original, x: x, y: y, width: w, height: h);
 
       final dir = await getTemporaryDirectory();
-      final path =
-          '${dir.path}/face_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      await File(path).writeAsBytes(img.encodeJpg(cropped, quality: 92));
+      final path = '${dir.path}/face_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      await File(path).writeAsBytes(img.encodeJpg(cropped, quality: 94));
 
       return path;
     } catch (e) {
@@ -180,7 +164,6 @@ class _AttendanceScreenState extends State<AttendanceScreen>
 
   void _showError(String message) {
     if (!mounted) return;
-
     Flushbar(
       message: message,
       backgroundColor: Colors.red.shade600,
@@ -203,8 +186,8 @@ class _AttendanceScreenState extends State<AttendanceScreen>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
-    final double cameraWidth = size.width * 0.75; // 75% chiều rộng màn hình
-    final double cameraHeight = cameraWidth * 4 / 3; // Tỷ lệ 3:4
+    final double cameraWidth = size.width * 0.75;
+    final double cameraHeight = cameraWidth * 4 / 3;
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -228,8 +211,7 @@ class _AttendanceScreenState extends State<AttendanceScreen>
       body: _isCameraInitialized && _controller != null
           ? Column(
               children: [
-                const SizedBox(height: kToolbarHeight + 40), // Khoảng cách từ AppBar
-
+                const SizedBox(height: kToolbarHeight + 40),
                 // Hướng dẫn
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 24),
@@ -241,10 +223,10 @@ class _AttendanceScreenState extends State<AttendanceScreen>
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.lightbulb, color: Colors.amber, size: 18),
+                      const Icon(Icons.lightbulb, color: Colors.amber, size: 18),
                       const SizedBox(width: 8),
                       Text(
-                        'Căn mặt vào khung oval',
+                        'Đưa mặt vào giữa khung nhỏ',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w500,
@@ -253,10 +235,8 @@ class _AttendanceScreenState extends State<AttendanceScreen>
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 32),
-
-                // Camera 3:4 vuông dọc
+                // Camera + Oval Guide
                 Center(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(32),
@@ -266,7 +246,7 @@ class _AttendanceScreenState extends State<AttendanceScreen>
                       color: Colors.black,
                       child: Stack(
                         children: [
-                          // Camera Preview (crop theo 3:4)
+                          // Camera Preview
                           SizedBox(
                             width: cameraWidth,
                             height: cameraHeight,
@@ -279,8 +259,7 @@ class _AttendanceScreenState extends State<AttendanceScreen>
                               ),
                             ),
                           ),
-
-                          // Oval Guide + Pulse
+                          // KHUNG OVAL NHỎ HƠN + PULSE
                           Center(
                             child: AnimatedBuilder(
                               animation: _pulseAnimation,
@@ -288,20 +267,19 @@ class _AttendanceScreenState extends State<AttendanceScreen>
                                 return Transform.scale(
                                   scale: _pulseAnimation.value,
                                   child: Container(
-                                    width: cameraWidth * 0.75,
-                                    height: cameraHeight * 0.85,
+                                    width: cameraWidth * 0.55,   // NHỎ HƠN: 55%
+                                    height: cameraHeight * 0.65, // Tỷ lệ dọc hợp lý
                                     decoration: BoxDecoration(
-                                      borderRadius:
-                                          BorderRadius.circular(cameraWidth),
+                                      borderRadius: BorderRadius.circular(cameraWidth),
                                       border: Border.all(
                                         color: Colors.white.withOpacity(0.95),
-                                        width: 3.5,
+                                        width: 3.0,
                                       ),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.white.withOpacity(0.25),
-                                          blurRadius: 25,
-                                          spreadRadius: 8,
+                                          color: Colors.white.withOpacity(0.3),
+                                          blurRadius: 20,
+                                          spreadRadius: 6,
                                         ),
                                       ],
                                     ),
@@ -315,9 +293,7 @@ class _AttendanceScreenState extends State<AttendanceScreen>
                     ),
                   ),
                 ),
-
                 const Spacer(),
-
                 // Nút chụp
                 Padding(
                   padding: const EdgeInsets.only(bottom: 50),

@@ -1,12 +1,11 @@
-// lib/screens/preview_screen.dart
 import 'dart:io';
 import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_application_learn/services/face_recognition_service.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
-import '../services/api_service.dart'; // Giả sử có ApiService
 
 class PreviewScreen extends StatefulWidget {
   final String imagePath;
@@ -59,7 +58,7 @@ class _PreviewScreenState extends State<PreviewScreen>
       if (!mounted) return;
 
       if (faces.isEmpty) {
-        _showError('Không phát hiện khuôn mặt. Vui lòng chụp lại!');
+        _showFlushbar("Không phát hiện khuôn mặt. Vui lòng chụp lại!", Colors.orange);
         await Future.delayed(const Duration(seconds: 2));
         if (mounted) Navigator.pop(context);
         return;
@@ -68,24 +67,19 @@ class _PreviewScreenState extends State<PreviewScreen>
       final face = faces.first;
       final bytes = await File(widget.imagePath).readAsBytes();
       final original = img.decodeImage(bytes);
-      if (original == null) throw Exception('Không đọc được ảnh');
+      if (original == null) throw Exception("Không đọc được ảnh");
 
+      const padding = 0.55; // Tăng để crop đủ mặt
       final rect = face.boundingBox;
-      const padding = 0.45;
       final x = (rect.left * (1 - padding)).clamp(0, original.width - 1).toInt();
       final y = (rect.top * (1 - padding)).clamp(0, original.height - 1).toInt();
-      final w = (rect.width * (1 + 2 * padding))
-          .clamp(1, original.width - x)
-          .toInt();
-      final h = (rect.height * (1 + 2 * padding))
-          .clamp(1, original.height - y)
-          .toInt();
+      final w = (rect.width * (1 + 2 * padding)).clamp(1, original.width - x).toInt();
+      final h = (rect.height * (1 + 2 * padding)).clamp(1, original.height - y).toInt();
 
       final cropped = img.copyCrop(original, x: x, y: y, width: w, height: h);
 
       final dir = await getTemporaryDirectory();
-      final path =
-          '${dir.path}/cropped_face_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final path = '${dir.path}/cropped_face_${DateTime.now().millisecondsSinceEpoch}.jpg';
       final file = File(path);
       await file.writeAsBytes(img.encodeJpg(cropped, quality: 94));
 
@@ -98,7 +92,7 @@ class _PreviewScreenState extends State<PreviewScreen>
     } catch (e) {
       debugPrint('Lỗi crop face: $e');
       if (mounted) {
-        _showError('Lỗi xử lý ảnh. Vui lòng thử lại.');
+        _showFlushbar("Lỗi xử lý ảnh. Vui lòng thử lại.", Colors.red);
       }
     } finally {
       await faceDetector.close();
@@ -107,54 +101,80 @@ class _PreviewScreenState extends State<PreviewScreen>
 
   Future<void> _confirmAndUpload() async {
     if (_croppedFace == null || _isUploading) return;
-
     setState(() => _isUploading = true);
     HapticFeedback.selectionClick();
 
     try {
-      final success = true;//await ApiService.uploadFace(_croppedFace!.path);
+      final result = await FaceRecognitionService.recognizeFace(_croppedFace!.path);
 
-      if (!mounted) return;
-
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Row(
-              children: [
-                Icon(Icons.check_circle_rounded, color: Colors.white),
-                SizedBox(width: 8),
-                Text('Chấm công thành công!'),
-              ],
-            ),
-            backgroundColor: Colors.green.shade600,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-        Navigator.pop(context, true); // Trả về true
-      } else {
-        _showError('Chấm công thất bại. Vui lòng thử lại.');
+      // === TRƯỜNG HỢP 404: Không có mặt (backend trả 404) ===
+      if (result == null) {
+        _showFlushbar("Khuôn mặt chưa rõ. Vui lòng chụp lại!", Colors.orange);
+        return;
       }
+
+      // === TRƯỜNG HỢP 200: Có kết quả ===
+      final results = result['results'] as List;
+      if (results.isEmpty) {
+        _showFlushbar("Không phát hiện khuôn mặt trong ảnh gửi đi.", Colors.orange);
+        return;
+      }
+
+      final info = results[0];
+      final bool recognized = info['recognized'] as bool? ?? false;
+      final String name = info['name'] as String? ?? 'Unknown';
+      final double confidence = (info['confidence'] as num?)?.toDouble() ?? 0.0;
+
+      if (!recognized) {
+        _showFlushbar(
+          "Không nhận diện được ($confidence%)",
+          Colors.redAccent,
+          icon: Icons.error_outline,
+        );
+        return;
+      }
+
+      // CHẤM CÔNG THÀNH CÔNG
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle_rounded, color: Colors.white),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Chấm công thành công: $name (${confidence.toStringAsFixed(1)}%)',
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.green.shade600,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+
+      Navigator.pop(context, true); // Trả về true
+
     } catch (e) {
-      _showError('Lỗi mạng. Không thể gửi ảnh.');
+      _showFlushbar("Lỗi mạng. Không thể gửi ảnh.", Colors.red);
     } finally {
       if (mounted) setState(() => _isUploading = false);
     }
   }
 
-  void _showError(String message) {
+  void _showFlushbar(String message, Color color, {IconData? icon}) {
     if (!mounted) return;
     Flushbar(
       message: message,
-      backgroundColor: Colors.red.shade600,
+      backgroundColor: color,
       duration: const Duration(seconds: 3),
       flushbarPosition: FlushbarPosition.TOP,
-      margin: const EdgeInsets.all(16),
-      borderRadius: BorderRadius.circular(16),
-      icon: const Icon(Icons.error_rounded, color: Colors.white),
-  
-      
+      margin: const EdgeInsets.all(12),
+      borderRadius: BorderRadius.circular(8),
+      icon: Icon(icon ?? Icons.info, color: Colors.white),
     ).show(context);
   }
 
@@ -169,7 +189,7 @@ class _PreviewScreenState extends State<PreviewScreen>
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
     final double previewWidth = size.width * 0.75;
-    final double previewHeight = previewWidth * 4 / 3; // Tỷ lệ 3:4
+    final double previewHeight = previewWidth * 4 / 3;
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -209,8 +229,7 @@ class _PreviewScreenState extends State<PreviewScreen>
             : Column(
                 children: [
                   const SizedBox(height: kToolbarHeight + 40),
-
-                  // Ảnh 3:4
+                  // Ảnh xem trước
                   Center(
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(32),
@@ -237,22 +256,19 @@ class _PreviewScreenState extends State<PreviewScreen>
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 24),
-
-                  // Badge phát hiện khuôn mặt
+                  // Badge phát hiện
                   if (_croppedFace != null)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
-                        color: Colors.green.shade700.withOpacity(0.8),
+                        color: Colors.green.shade700.withOpacity(0.85),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.face_retouching_natural,
-                              color: Colors.white, size: 18),
+                          const Icon(Icons.face_retouching_natural, color: Colors.white, size: 18),
                           const SizedBox(width: 8),
                           Text(
                             'Khuôn mặt đã được phát hiện',
@@ -264,9 +280,7 @@ class _PreviewScreenState extends State<PreviewScreen>
                         ],
                       ),
                     ),
-
                   const Spacer(),
-
                   // Nút hành động
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -317,7 +331,6 @@ class _PreviewScreenState extends State<PreviewScreen>
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 40),
                 ],
               ),
