@@ -296,7 +296,7 @@ class _PreviewScreenState extends State<PreviewScreen>
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.green.shade700.withOpacity(0.85),
+                        color: Colors.green.shade700.withValues(alpha: .85),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(

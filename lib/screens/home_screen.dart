@@ -78,7 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
               // Card chào mừng
               Card(
                 elevation: 0,
-                color: theme.colorScheme.primaryContainer.withOpacity(0.7),
+                color: theme.colorScheme.primaryContainer.withValues(alpha: .7),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
@@ -89,7 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       // Avatar tròn với icon
                       CircleAvatar(
                         radius: 40,
-                        backgroundColor: theme.colorScheme.primary.withOpacity(0.2),
+                        backgroundColor: theme.colorScheme.primary.withValues(alpha: .2),
                         child: Icon(
                           Icons.person_rounded,
                           size: 48,
@@ -115,7 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withOpacity(0.15),
+                          color: theme.colorScheme.primary.withValues(alpha: .15),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -149,7 +149,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                     elevation: 2,
-                    shadowColor: theme.colorScheme.primary.withOpacity(0.3),
+                    shadowColor: theme.colorScheme.primary.withValues(alpha: .3),
                   ),
                 ),
               ),

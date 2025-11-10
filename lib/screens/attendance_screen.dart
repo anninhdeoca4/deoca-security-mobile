@@ -126,7 +126,7 @@ class _AttendanceScreenState extends State<AttendanceScreen>
       options: FaceDetectorOptions(
         enableContours: true,
         enableLandmarks: true,
-        performanceMode: FaceDetectorMode.accurate,
+        performanceMode: FaceDetectorMode.fast,
       ),
     );
     try {

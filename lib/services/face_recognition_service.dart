@@ -1,3 +1,5 @@
+import 'dart:nativewrappers/_internal/vm/lib/internal_patch.dart';
+
 import 'package:dio/dio.dart';
 
 class FaceRecognitionService {
@@ -24,7 +26,7 @@ class FaceRecognitionService {
       }
       return null;
     } on DioException catch (e) {
-      print("❌ API error: ${e.response?.data ?? e.message}");
+      printToConsole("❌ API error: ${e.response?.data ?? e.message}");
       return null;
     }
   }

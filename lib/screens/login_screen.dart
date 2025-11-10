@@ -117,7 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
               // Card nhập mã
               Card(
                 elevation: 0,
-                color: theme.colorScheme.surfaceVariant.withOpacity(0.4),
+                color: theme.colorScheme.surfaceContainerHighest .withValues(alpha: .4),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
@@ -155,7 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(
-                              color: theme.colorScheme.outline.withOpacity(0.3),
+                              color: theme.colorScheme.outline.withValues(alpha: .3),
                             ),
                           ),
                         ),
