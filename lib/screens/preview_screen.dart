@@ -58,7 +58,10 @@ class _PreviewScreenState extends State<PreviewScreen>
       if (!mounted) return;
 
       if (faces.isEmpty) {
-        _showFlushbar("Không phát hiện khuôn mặt. Vui lòng chụp lại!", Colors.orange);
+        _showFlushbar(
+          "Không phát hiện khuôn mặt. Vui lòng chụp lại!",
+          Colors.orange,
+        );
         await Future.delayed(const Duration(seconds: 2));
         if (mounted) Navigator.pop(context);
         return;
@@ -69,17 +72,47 @@ class _PreviewScreenState extends State<PreviewScreen>
       final original = img.decodeImage(bytes);
       if (original == null) throw Exception("Không đọc được ảnh");
 
-      const padding = 0.55; // Tăng để crop đủ mặt
       final rect = face.boundingBox;
-      final x = (rect.left * (1 - padding)).clamp(0, original.width - 1).toInt();
-      final y = (rect.top * (1 - padding)).clamp(0, original.height - 1).toInt();
-      final w = (rect.width * (1 + 2 * padding)).clamp(1, original.width - x).toInt();
-      final h = (rect.height * (1 + 2 * padding)).clamp(1, original.height - y).toInt();
+      final centerX = rect.left + rect.width / 2;
+      final centerY = rect.top + rect.height / 2;
 
-      final cropped = img.copyCrop(original, x: x, y: y, width: w, height: h);
+      // padding 0.4–0.6 là hợp lý, tuỳ bạn điều chỉnh
+      const padding = 0.6;
+
+      // mở rộng khung theo padding
+      final newWidth = rect.width * (1 + padding);
+      final newHeight = rect.height * (1 + padding);
+
+      final left = (centerX - newWidth / 2)
+          .clamp(0, original.width - 1)
+          .toInt();
+      final top = (centerY - newHeight / 2)
+          .clamp(0, original.height - 1)
+          .toInt();
+      final right = (centerX + newWidth / 2)
+          .clamp(0, original.width - 1)
+          .toInt();
+      final bottom = (centerY + newHeight / 2)
+          .clamp(0, original.height - 1)
+          .toInt();
+
+      final cropWidth = (right - left).clamp(1, original.width - left).toInt();
+      final cropHeight = (bottom - top).clamp(1, original.height - top).toInt();
+
+      final flipped = img.flipHorizontal(original);
+
+      // thực hiện crop ảnh
+      final cropped = img.copyCrop(
+        flipped,
+        x: left,
+        y: top,
+        width: cropWidth,
+        height: cropHeight,
+      );
 
       final dir = await getTemporaryDirectory();
-      final path = '${dir.path}/cropped_face_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final path =
+          '${dir.path}/cropped_face_${DateTime.now().millisecondsSinceEpoch}.jpg';
       final file = File(path);
       await file.writeAsBytes(img.encodeJpg(cropped, quality: 94));
 
@@ -105,7 +138,9 @@ class _PreviewScreenState extends State<PreviewScreen>
     HapticFeedback.selectionClick();
 
     try {
-      final result = await FaceRecognitionService.recognizeFace(_croppedFace!.path);
+      final result = await FaceRecognitionService.recognizeFace(
+        _croppedFace!.path,
+      );
 
       // === TRƯỜNG HỢP 404: Không có mặt (backend trả 404) ===
       if (result == null) {
@@ -116,7 +151,10 @@ class _PreviewScreenState extends State<PreviewScreen>
       // === TRƯỜNG HỢP 200: Có kết quả ===
       final results = result['results'] as List;
       if (results.isEmpty) {
-        _showFlushbar("Không phát hiện khuôn mặt trong ảnh gửi đi.", Colors.orange);
+        _showFlushbar(
+          "Không phát hiện khuôn mặt trong ảnh gửi đi.",
+          Colors.orange,
+        );
         return;
       }
 
@@ -151,13 +189,14 @@ class _PreviewScreenState extends State<PreviewScreen>
           ),
           backgroundColor: Colors.green.shade600,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           duration: const Duration(seconds: 3),
         ),
       );
 
       Navigator.pop(context, true); // Trả về true
-
     } catch (e) {
       _showFlushbar("Lỗi mạng. Không thể gửi ảnh.", Colors.red);
     } finally {
@@ -217,7 +256,10 @@ class _PreviewScreenState extends State<PreviewScreen>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
+                    CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 3,
+                    ),
                     SizedBox(height: 16),
                     Text(
                       'Đang xử lý khuôn mặt...',
@@ -260,7 +302,10 @@ class _PreviewScreenState extends State<PreviewScreen>
                   // Badge phát hiện
                   if (_croppedFace != null)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.green.shade700.withOpacity(0.85),
                         borderRadius: BorderRadius.circular(20),
@@ -268,7 +313,11 @@ class _PreviewScreenState extends State<PreviewScreen>
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.face_retouching_natural, color: Colors.white, size: 18),
+                          const Icon(
+                            Icons.face_retouching_natural,
+                            color: Colors.white,
+                            size: 18,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             'Khuôn mặt đã được phát hiện',
@@ -317,7 +366,9 @@ class _PreviewScreenState extends State<PreviewScreen>
                                     ),
                                   )
                                 : const Icon(Icons.check_circle_rounded),
-                            label: Text(_isUploading ? 'Đang gửi...' : 'Xác nhận'),
+                            label: Text(
+                              _isUploading ? 'Đang gửi...' : 'Xác nhận',
+                            ),
                             style: FilledButton.styleFrom(
                               backgroundColor: theme.colorScheme.primary,
                               padding: const EdgeInsets.symmetric(vertical: 16),
