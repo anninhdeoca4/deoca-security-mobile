@@ -1,15 +1,11 @@
+import 'package:flutter_application_learn/core/storage/preferences.dart';
+
 import '../../core/network/api_service.dart';
 import '../../core/network/api_response.dart';
 import '../../core/constants/api_constants.dart';
-import '../../core/storage/token_storage.dart';
-import '../../core/storage/userdata_storage.dart';
-
 
 class AuthRepository {
   final ApiService _apiService = ApiService(baseUrl: ApiConstants.baseUrl);
-  final TokenStorage _tokenStorage = TokenStorage();
-  final UserDataStorage _userDataStorage = UserDataStorage();
-
 
   Future<ApiResponse<Map<String, dynamic>>> login({
     required String code,
@@ -21,29 +17,32 @@ class AuthRepository {
     );
 
     if (response.success && response.data != null) {
-      await _userDataStorage.saveCode(response.data!['data']['code']);
-      await _userDataStorage.saveName(response.data!['data']['username']);
-      await _tokenStorage.saveToken(response.data!['data']['token']);
+      final userData = response.data!['data'];
+
+      // Lưu tất cả thông tin bằng SharedPreferences
+      await Preferences.saveToken(userData['token'] as String);
+      await Preferences.saveEmployeeCode(userData['msht'] as String);
+      await Preferences.saveEmployeeName(userData['username'] as String);
     }
+
     return response;
-  }
-  Future<ApiResponse<Map<String, dynamic>>> register({
-    required String name,
-    required String email,
-    required String password,
-  }) async {
-    return await _apiService.post<Map<String, dynamic>>(
-      ApiConstants.register,
-      data: {'name': name, 'email': email, 'password': password},
-      fromJson: (data) => data as Map<String, dynamic>,
-    );
   }
 
   Future<ApiResponse<void>> logout() async {
     final response = await _apiService.post<void>(ApiConstants.logout);
-    if (response.success) {
-      await _tokenStorage.deleteTokens();
-    }
+
+    // Dù có lỗi hay không, vẫn xóa dữ liệu local
+    await Preferences.clearAllUserData();
+
     return response;
+  }
+
+  // Bonus: Hàm lấy thông tin user đã lưu (dùng ở các màn hình khác)
+  static Future<Map<String, String?>> getCurrentUser() async {
+    return {
+      'token': await Preferences.getToken(),
+      'code': await Preferences.getEmployeeCode(),
+      'name': await Preferences.getEmployeeName(),
+    };
   }
 }

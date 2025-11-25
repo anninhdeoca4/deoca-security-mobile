@@ -69,6 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _error = 'Đã xảy ra lỗi. Vui lòng thử lại.');
+      _isLoading = false;
       debugPrint('Unexpected error during login: $e');
     }
   }
