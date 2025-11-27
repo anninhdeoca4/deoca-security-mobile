@@ -28,7 +28,7 @@ class _AttendanceScreenState extends State<AttendanceScreen>
   @override
   void initState() {
     super.initState();
-    _initCamera();       // Khởi tạo camera
+    _initCamera(); // Khởi tạo camera
     _setupPulseAnimation(); // Khởi tạo hiệu ứng pulse cho khung khuôn mặt
   }
 
@@ -70,7 +70,9 @@ class _AttendanceScreenState extends State<AttendanceScreen>
 
   /// Chụp ảnh, phát hiện và crop khuôn mặt
   Future<void> _capturePhoto() async {
-    if (_controller == null || !_controller!.value.isInitialized || _isCapturing) {
+    if (_controller == null ||
+        !_controller!.value.isInitialized ||
+        _isCapturing) {
       return; // Nếu chưa sẵn sàng hoặc đang chụp thì return
     }
     setState(() => _isCapturing = true);
@@ -93,9 +95,11 @@ class _AttendanceScreenState extends State<AttendanceScreen>
       final result = await Navigator.push<bool>(
         context,
         PageRouteBuilder(
-          pageBuilder: (_, __, ___) => PreviewScreen(imagePath: croppedPath),
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              PreviewScreen(imagePath: croppedPath),
           transitionDuration: const Duration(milliseconds: 300),
-          transitionsBuilder: (_, a, __, c) => FadeTransition(opacity: a, child: c),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+              FadeTransition(opacity: animation, child: child),
         ),
       );
 
@@ -112,7 +116,9 @@ class _AttendanceScreenState extends State<AttendanceScreen>
             ),
             backgroundColor: Colors.green.shade600,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -153,15 +159,24 @@ class _AttendanceScreenState extends State<AttendanceScreen>
       // Padding để bù cho khung nhỏ hơn
       const padding = 0.55;
       final rect = face.boundingBox;
-      final x = (rect.left * (1 - padding)).clamp(0, original.width - 1).toInt();
-      final y = (rect.top * (1 - padding)).clamp(0, original.height - 1).toInt();
-      final w = (rect.width * (1 + 2 * padding)).clamp(1, original.width - x).toInt();
-      final h = (rect.height * (1 + 2 * padding)).clamp(1, original.height - y).toInt();
+      final x = (rect.left * (1 - padding))
+          .clamp(0, original.width - 1)
+          .toInt();
+      final y = (rect.top * (1 - padding))
+          .clamp(0, original.height - 1)
+          .toInt();
+      final w = (rect.width * (1 + 2 * padding))
+          .clamp(1, original.width - x)
+          .toInt();
+      final h = (rect.height * (1 + 2 * padding))
+          .clamp(1, original.height - y)
+          .toInt();
 
       final cropped = img.copyCrop(original, x: x, y: y, width: w, height: h);
 
       final dir = await getTemporaryDirectory();
-      final path = '${dir.path}/face_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final path =
+          '${dir.path}/face_${DateTime.now().millisecondsSinceEpoch}.jpg';
       await File(path).writeAsBytes(img.encodeJpg(cropped, quality: 94));
 
       return path;
@@ -216,7 +231,10 @@ class _AttendanceScreenState extends State<AttendanceScreen>
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -361,7 +379,11 @@ class _AttendanceScreenState extends State<AttendanceScreen>
                       strokeWidth: 3,
                     ),
                   )
-                : const Icon(Icons.camera_alt_rounded, color: Colors.black87, size: 40),
+                : const Icon(
+                    Icons.camera_alt_rounded,
+                    color: Colors.black87,
+                    size: 40,
+                  ),
           ),
         ),
       ),

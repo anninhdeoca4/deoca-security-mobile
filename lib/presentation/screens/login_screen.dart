@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_application_learn/components/custom_flushbar.dart';
+import 'package:flutter_application_learn/core/storage/preferences.dart';
 import 'package:flutter_application_learn/data/repositories/auth_repository.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -15,6 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _authRepository = AuthRepository();
 
   bool _isLoading = false;
+  bool _rememberMe = false; // trạng thái checkbox
   String? _error;
 
   @override
@@ -23,6 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
     });
+    _loadSavedCode();
   }
 
   @override
@@ -48,29 +52,47 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      final response = await _authRepository.login(code: code);
+      final response = await _authRepository.login(msht: code);
 
       if (!mounted) return;
 
       setState(() => _isLoading = false);
 
       if (response.data != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Đăng nhập thành công!'),
+        if (!_rememberMe) {
+          await Preferences.clearAllUserData();
+        }
+
+        // Chỉ show Flushbar nếu widget vẫn còn mounted
+        if (mounted) {
+          CustomFlushbar.show(
+            context,
+            message: 'Đăng nhập thành công! Chào mừng $code',
             backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
-        Navigator.pushReplacementNamed(context, '/home');
+            icon: Icons.check_circle,
+          );
+        }
+        if (mounted) Navigator.pushReplacementNamed(context, '/home');
       } else {
-        setState(() => _error = 'Mã nhân viên không đúng. Vui lòng kiểm tra lại.');
+        setState(
+          () => _error = 'Mã nhân viên không đúng. Vui lòng kiểm tra lại.',
+        );
       }
     } catch (e) {
       if (!mounted) return;
       setState(() => _error = 'Đã xảy ra lỗi. Vui lòng thử lại.');
       _isLoading = false;
       debugPrint('Unexpected error during login: $e');
+    }
+  }
+
+  Future<void> _loadSavedCode() async {
+    final savedCode = await Preferences.getEmployeeCode();
+    if (savedCode != null && savedCode.isNotEmpty) {
+      setState(() {
+        _codeController.text = savedCode;
+        _rememberMe = true;
+      });
     }
   }
 
@@ -86,7 +108,9 @@ class _LoginScreenState extends State<LoginScreen> {
         centerTitle: true,
         title: Text(
           'Đăng nhập',
-          style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       body: SafeArea(
@@ -121,7 +145,7 @@ class _LoginScreenState extends State<LoginScreen> {
         'assets/images/DecaLogo.png',
         height: 120,
         fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) => Container(
+        errorBuilder: (context, error, stackTrace) => Container(
           height: 120,
           width: 120,
           decoration: BoxDecoration(
@@ -141,7 +165,9 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildLoginCard(ThemeData theme) {
     return Card(
       elevation: 0,
-      color: theme.colorScheme.surfaceContainerHighest.withAlpha((0.4 * 255).toInt()),
+      color: theme.colorScheme.surfaceContainerHighest.withAlpha(
+        (0.4 * 255).toInt(),
+      ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -174,22 +200,47 @@ class _LoginScreenState extends State<LoginScreen> {
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
                   borderSide: BorderSide(
-                    color: theme.colorScheme.outline.withAlpha((0.3 * 255).toInt()),
+                    color: theme.colorScheme.outline.withAlpha(
+                      (0.3 * 255).toInt(),
+                    ),
                   ),
                 ),
               ),
               onSubmitted: (_) => _handleLogin(),
             ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Checkbox(
+                  value: _rememberMe,
+                  onChanged: (value) {
+                    setState(() {
+                      _rememberMe = value ?? false;
+                    });
+                  },
+                ),
+                const SizedBox(width: 8),
+                const Text('Nhớ mã nhân viên'),
+              ],
+            ),
+
             if (_error != null) ...[
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Icon(Icons.error_outline, color: theme.colorScheme.error, size: 18),
+                  Icon(
+                    Icons.error_outline,
+                    color: theme.colorScheme.error,
+                    size: 18,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       _error!,
-                      style: TextStyle(color: theme.colorScheme.error, fontSize: 14),
+                      style: TextStyle(
+                        color: theme.colorScheme.error,
+                        fontSize: 14,
+                      ),
                     ),
                   ),
                 ],
@@ -211,7 +262,10 @@ class _LoginScreenState extends State<LoginScreen> {
             ? const SizedBox(
                 width: 24,
                 height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: Colors.white,
+                ),
               )
             : const Icon(Icons.login_rounded),
         label: Text(
@@ -219,7 +273,9 @@ class _LoginScreenState extends State<LoginScreen> {
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
         style: FilledButton.styleFrom(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           elevation: 2,
         ),
       ),
@@ -229,7 +285,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
 class UpperCaseTextFormatter extends TextInputFormatter {
   @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
     return newValue.copyWith(
       text: newValue.text.toUpperCase(),
       selection: newValue.selection,

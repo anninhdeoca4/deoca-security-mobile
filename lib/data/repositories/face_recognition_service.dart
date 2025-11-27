@@ -1,7 +1,7 @@
 // services/face_recognition_service.dart
 import 'package:dio/dio.dart';
 import 'package:flutter_application_learn/core/constants/api_constants.dart';
-import 'package:flutter_application_learn/core/storage/userdata_storage.dart';
+import 'package:flutter_application_learn/core/storage/preferences.dart';
 
 class FaceRecognitionService {
 
@@ -11,10 +11,8 @@ class FaceRecognitionService {
     required double latitude,
   }) async {
     try {
-      final UserDataStorage userDataStorage = UserDataStorage();
-
       // LẤY CODE TỪ data storage
-      final code = await userDataStorage.getCode();
+      final code = await Preferences.getEmployeeCode();
 
       if (code!.isEmpty) {
         return null;

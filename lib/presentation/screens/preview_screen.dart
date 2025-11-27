@@ -1,8 +1,8 @@
 // preview_screen.dart
 import 'dart:io';
-import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_application_learn/components/custom_flushbar.dart';
 import 'package:flutter_application_learn/data/repositories/face_recognition_service.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:image/image.dart' as img;
@@ -59,9 +59,11 @@ class _PreviewScreenState extends State<PreviewScreen>
       if (!mounted) return;
 
       if (faces.isEmpty) {
-        _showFlushbar(
-          "Không phát hiện khuôn mặt. Vui lòng chụp lại!",
-          Colors.orange,
+        CustomFlushbar.show(
+          context,
+          message: "Không phát hiện khuôn mặt. Vui lòng thử lại.",
+          backgroundColor: Colors.orange,
+          icon: Icons.warning_amber_rounded,
         );
         await Future.delayed(const Duration(seconds: 2));
         if (mounted) Navigator.pop(context);
@@ -113,7 +115,12 @@ class _PreviewScreenState extends State<PreviewScreen>
     } catch (e) {
       debugPrint('Lỗi crop face: $e');
       if (mounted) {
-        _showFlushbar("Lỗi xử lý ảnh. Vui lòng thử lại.", Colors.red);
+        CustomFlushbar.show(
+          context,
+          message: "Lỗi xử lý ảnh. Vui lòng thử lại.",
+          backgroundColor: Colors.red,
+          icon: Icons.error,
+        );
       }
     } finally {
       await faceDetector.close();
@@ -128,22 +135,37 @@ class _PreviewScreenState extends State<PreviewScreen>
     try {
       // 1. KIỂM TRA GPS
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        _showFlushbar("Vui lòng bật GPS!", Colors.orange);
+      if (!serviceEnabled && mounted) {
+        CustomFlushbar.show(
+          context,
+          message: "Vui lòng bật GPS!",
+          backgroundColor: Colors.orange,
+          icon: Icons.warning_amber_rounded,
+        );
         return;
       }
 
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          _showFlushbar("Cần cấp quyền vị trí!", Colors.red);
+        if (permission == LocationPermission.denied && mounted) {
+          CustomFlushbar.show(
+            context,
+            message: "Quyền vị trí bị từ chối.",
+            backgroundColor: Colors.red,
+            icon: Icons.error,
+          );
           return;
         }
       }
 
-      if (permission == LocationPermission.deniedForever) {
-        _showFlushbar("Quyền vị trí bị từ chối vĩnh viễn.", Colors.red);
+      if (permission == LocationPermission.deniedForever && mounted) {
+        CustomFlushbar.show(
+          context,
+          message: "Quyền vị trí bị từ chối vĩnh viễn.",
+          backgroundColor: Colors.red,
+          icon: Icons.error,
+        );
         return;
       }
       // Cấu hình LocationSettings
@@ -164,7 +186,15 @@ class _PreviewScreenState extends State<PreviewScreen>
       );
 
       if (result == null) {
-        _showFlushbar("Lỗi mạng hoặc server.", Colors.red);
+        if (!mounted) return;
+        CustomFlushbar.show(
+          context,
+          message: "Lỗi mạng hoặc server.",
+          backgroundColor: Colors.red,
+          icon: Icons.error,
+          autoPopHome: true,
+        );
+
         return;
       }
 
@@ -174,10 +204,13 @@ class _PreviewScreenState extends State<PreviewScreen>
 
       // Nếu không thành công (success = false)
       if (!success) {
-        _showFlushbar(
-          message,
-          Colors.orange,
+        if (!mounted) return;
+        CustomFlushbar.show(
+          context,
+          message: message,
+          backgroundColor: Colors.orange,
           icon: Icons.warning_amber_rounded,
+          autoPopHome: true,
         );
         return;
       }
@@ -185,7 +218,13 @@ class _PreviewScreenState extends State<PreviewScreen>
       // Nếu thành công, lấy thông tin data
       final data = result['data'] as Map<String, dynamic>?;
       if (data == null) {
-        _showFlushbar(message, Colors.green, icon: Icons.check_circle);
+        if (!mounted) return;
+        CustomFlushbar.show(
+          context,
+          message: message,
+          backgroundColor: Colors.green,
+          icon: Icons.check_circle,
+        );
         await Future.delayed(const Duration(seconds: 1));
         if (mounted) Navigator.pop(context, true);
         return;
@@ -252,28 +291,33 @@ class _PreviewScreenState extends State<PreviewScreen>
       await Future.delayed(const Duration(milliseconds: 1500));
       if (mounted) Navigator.pop(context, true);
     } on LocationServiceDisabledException {
-      _showFlushbar("GPS bị tắt!", Colors.orange);
+      if (!mounted) return;
+      CustomFlushbar.show(
+        context,
+        message: "Vui lòng bật GPS!",
+        backgroundColor: Colors.orange,
+        icon: Icons.warning_amber_rounded,
+      );
     } on PermissionDeniedException {
-      _showFlushbar("Cần cấp quyền vị trí!", Colors.red);
+      if (!mounted) return;
+      CustomFlushbar.show(
+        context,
+        message: "Cần cấp quyền vị trí!",
+        backgroundColor: Colors.red,
+        icon: Icons.error,
+      );
     } catch (e) {
       debugPrint('Lỗi upload: $e');
-      _showFlushbar("Lỗi: ${e.toString()}", Colors.red);
+      if (!mounted) return;
+      CustomFlushbar.show(
+        context,
+        message: "Lỗi: ${e.toString()}",
+        backgroundColor: Colors.red,
+        icon: Icons.error,
+      );
     } finally {
       if (mounted) setState(() => _isUploading = false);
     }
-  }
-
-  void _showFlushbar(String message, Color color, {IconData? icon}) {
-    if (!mounted) return;
-    Flushbar(
-      message: message,
-      backgroundColor: color,
-      duration: const Duration(seconds: 3),
-      flushbarPosition: FlushbarPosition.TOP,
-      margin: const EdgeInsets.all(12),
-      borderRadius: BorderRadius.circular(8),
-      icon: Icon(icon ?? Icons.info, color: Colors.white),
-    ).show(context);
   }
 
   @override
@@ -364,7 +408,7 @@ class _PreviewScreenState extends State<PreviewScreen>
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.green.shade700.withOpacity(0.85),
+                        color: Colors.green.shade700.withValues(alpha: 0.85),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(

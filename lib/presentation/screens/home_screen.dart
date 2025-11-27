@@ -1,7 +1,7 @@
 // lib/screens/home_screen.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_application_learn/core/storage/token_storage.dart';
-import 'package:flutter_application_learn/core/storage/userdata_storage.dart';
+import 'package:flutter_application_learn/core/storage/preferences.dart';
+import 'package:flutter_application_learn/data/repositories/auth_repository.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -11,8 +11,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final TokenStorage tokenStorage = TokenStorage();
-  final UserDataStorage userDataStorage = UserDataStorage();
+  final _authRepository = AuthRepository();
+
   String _username = "Đang tải...";
   String _code = "Đang tải...";
 
@@ -23,8 +23,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadUserData() async {
-    final username = await userDataStorage.getName();
-    final code = await userDataStorage.getCode();
+    final username = await Preferences.getEmployeeName();
+    final code = await Preferences.getEmployeeCode();
+
     if (mounted) {
       setState(() {
         _username = username!;
@@ -34,9 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _logout() async {
-    await tokenStorage.deleteTokens();
-    await userDataStorage.deleteCode();
-    await userDataStorage.deleteName();
+    await _authRepository.logout();
     if (mounted) {
       Navigator.pushReplacementNamed(context, '/login');
     }

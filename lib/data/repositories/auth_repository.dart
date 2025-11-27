@@ -1,4 +1,5 @@
 import 'package:flutter_application_learn/core/storage/preferences.dart';
+import 'package:flutter_application_learn/core/storage/token_storage.dart';
 
 import '../../core/network/api_service.dart';
 import '../../core/network/api_response.dart';
@@ -8,19 +9,20 @@ class AuthRepository {
   final ApiService _apiService = ApiService(baseUrl: ApiConstants.baseUrl);
 
   Future<ApiResponse<Map<String, dynamic>>> login({
-    required String code,
+    required String msht,
   }) async {
     final response = await _apiService.post<Map<String, dynamic>>(
       ApiConstants.login,
-      data: {'code': code},
+      data: {'code': msht},
       fromJson: (data) => data as Map<String, dynamic>,
     );
 
     if (response.success && response.data != null) {
       final userData = response.data!['data'];
-
-      // Lưu tất cả thông tin bằng SharedPreferences
-      await Preferences.saveToken(userData['token'] as String);
+      
+      // TOKEN LƯU VÀO SUCURE STORAGE
+      await TokenStorage().saveToken(userData['token'] as String);
+      // LƯU THÔNG TIN USER VÀO SHARED PREFERENCES
       await Preferences.saveEmployeeCode(userData['msht'] as String);
       await Preferences.saveEmployeeName(userData['username'] as String);
     }
@@ -28,21 +30,19 @@ class AuthRepository {
     return response;
   }
 
-  Future<ApiResponse<void>> logout() async {
-    final response = await _apiService.post<void>(ApiConstants.logout);
+  // Future<ApiResponse<void>> logout() async {
+  //   //final response = await _apiService.post<void>(ApiConstants.logout);
 
-    // Dù có lỗi hay không, vẫn xóa dữ liệu local
+  //   // XÓA THÔNG TIN USER KHI LOGOUT
+  //   await Preferences.clearAllUserData();
+  //   await TokenStorage().deleteTokens();
+
+  //   return response;
+  // }
+
+  Future<void> logout() async {
+    // XÓA THÔNG TIN USER KHI LOGOUT
     await Preferences.clearAllUserData();
-
-    return response;
-  }
-
-  // Bonus: Hàm lấy thông tin user đã lưu (dùng ở các màn hình khác)
-  static Future<Map<String, String?>> getCurrentUser() async {
-    return {
-      'token': await Preferences.getToken(),
-      'code': await Preferences.getEmployeeCode(),
-      'name': await Preferences.getEmployeeName(),
-    };
+    await TokenStorage().deleteTokens();
   }
 }
