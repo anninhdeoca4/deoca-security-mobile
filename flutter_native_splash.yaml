@@ -1,0 +1,35 @@
+# flutter_native_splash.yaml
+flutter_native_splash:
+
+  # ====================== CHO TẤT CẢ NỀN TẢNG (trừ Android 12+) ======================
+  color: "#ffffff"               # Nền trắng khi Light mode
+  color_dark: "#121212"          # Nền đen khi Dark mode
+
+  # Logo dùng chung cho cả sáng và tối
+  image: assets/images/splash.png
+
+  # Ẩn status bar + navigation bar
+  fullscreen: true
+
+
+  # ================================= ANDROID 12+ =================================
+  # Bắt buộc phải cấu hình riêng cho Android 12 trở lên
+  android_12:
+    # Màu nền
+    color: "#ffffff"             # Light mode
+    color_dark: "#121212"        # Dark mode
+
+    # Logo cho Android 12+
+    # Dùng chung 1 logo (không cần dark riêng)
+    image: assets/images/splash.png
+    # Nếu bạn muốn logo Android 12 có nền trong suốt thì tạo file riêng:
+    # image: assets/images/splash_android12.png   (nền transparent)
+
+    # (Tuỳ chọn) Nếu muốn thêm viền tròn nền phía sau logo trên Android 12
+    # icon_background_color: "#ffffff"
+    # icon_background_color_dark: "#121212"
+
+  # ================================= PLATFORMS =================================
+  android: true
+  ios: true
+  web: false
