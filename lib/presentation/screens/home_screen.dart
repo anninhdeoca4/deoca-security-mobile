@@ -25,9 +25,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadUserData() async {
     final username = await Preferences.getEmployeeName();
     final code = await Preferences.getEmployeeCode();
-    print("---------------------------------------------");
-    print(username);
-    print(code);
 
     if (mounted) {
       setState(() {

@@ -31,15 +31,6 @@ class AuthRepository {
     return response;
   }
 
-  // Future<ApiResponse<void>> logout() async {
-  //   //final response = await _apiService.post<void>(ApiConstants.logout);
-
-  //   // XÓA THÔNG TIN USER KHI LOGOUT
-  //   await Preferences.clearAllUserData();
-  //   await TokenStorage().deleteTokens();
-
-  //   return response;
-  // }
 
   Future<void> logout() async {
     // XÓA THÔNG TIN USER KHI LOGOUT
