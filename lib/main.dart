@@ -1,8 +1,8 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_application_learn/presentation/screens/attendance_screen.dart';
-import 'package:flutter_application_learn/presentation/screens/home_screen.dart';
-import 'package:flutter_application_learn/presentation/screens/login_screen.dart';
+import 'package:deoca_security_mobie/presentation/screens/attendance_screen.dart';
+import 'package:deoca_security_mobie/presentation/screens/home_screen.dart';
+import 'package:deoca_security_mobie/presentation/screens/login_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {

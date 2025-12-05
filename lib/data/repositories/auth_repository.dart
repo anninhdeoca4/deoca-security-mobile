@@ -1,5 +1,5 @@
-import 'package:flutter_application_learn/core/storage/preferences.dart';
-import 'package:flutter_application_learn/core/storage/token_storage.dart';
+import 'package:deoca_security_mobie/core/storage/preferences.dart';
+import 'package:deoca_security_mobie/core/storage/token_storage.dart';
 
 import '../../core/network/api_service.dart';
 import '../../core/network/api_response.dart';

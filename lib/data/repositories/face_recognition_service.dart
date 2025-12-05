@@ -1,7 +1,7 @@
 // services/face_recognition_service.dart
 import 'package:dio/dio.dart';
-import 'package:flutter_application_learn/core/constants/api_constants.dart';
-import 'package:flutter_application_learn/core/storage/preferences.dart';
+import 'package:deoca_security_mobie/core/constants/api_constants.dart';
+import 'package:deoca_security_mobie/core/storage/preferences.dart';
 
 class FaceRecognitionService {
 

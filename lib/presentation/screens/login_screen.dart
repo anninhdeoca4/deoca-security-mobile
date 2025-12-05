@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_application_learn/components/custom_flushbar.dart';
-import 'package:flutter_application_learn/core/storage/preferences.dart';
-import 'package:flutter_application_learn/data/repositories/auth_repository.dart';
+import 'package:deoca_security_mobie/components/custom_flushbar.dart';
+import 'package:deoca_security_mobie/core/storage/preferences.dart';
+import 'package:deoca_security_mobie/data/repositories/auth_repository.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

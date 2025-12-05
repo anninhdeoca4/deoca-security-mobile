@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.flutter_application_learn"
+    namespace = "com.example.deoca_security_mobie"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 

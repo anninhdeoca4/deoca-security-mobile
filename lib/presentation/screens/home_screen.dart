@@ -1,7 +1,7 @@
 // lib/screens/home_screen.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_application_learn/core/storage/preferences.dart';
-import 'package:flutter_application_learn/data/repositories/auth_repository.dart';
+import 'package:deoca_security_mobie/core/storage/preferences.dart';
+import 'package:deoca_security_mobie/data/repositories/auth_repository.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

@@ -2,8 +2,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_application_learn/components/custom_flushbar.dart';
-import 'package:flutter_application_learn/data/repositories/face_recognition_service.dart';
+import 'package:deoca_security_mobie/components/custom_flushbar.dart';
+import 'package:deoca_security_mobie/data/repositories/face_recognition_service.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
